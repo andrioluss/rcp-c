@@ -9,6 +9,9 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
+#include <time.h>
+
+#define DIM_BUFFER 1024
 
 int main(int argc, char const *argv[])
 {
@@ -17,6 +20,8 @@ int main(int argc, char const *argv[])
         perror("Usage: rcp nodoserver nomefile");
         exit(1);
     }
+
+    clock_t begin = clock();
 
     struct sockaddr_in serverSock;
     serverSock.sin_family = AF_INET;
@@ -59,11 +64,31 @@ int main(int argc, char const *argv[])
     }
 
     //in fdFile ho il file aperto!
+    /*-----------------------------------------------------------------------------------------------------------
+    TEST!!!
+    Scopriamo che con un file da 80000 byte, il client impiega per la sua esecuzione:
+     - 0.051145 microsec --> se legge da file e invia su socket un char alla volta! (10^-8)
+     - 0.052781 --> se legge 256 byte alla volta e li scrive allo stesso modo
+     - 0.000232 --> se legge 1024 byte alla volta e li scrive allo stesso modo
+
     char tmp;
     while((read(fdFile, &tmp, sizeof(tmp))) > 0){
         write(fdSocket, &tmp, sizeof(char));
     }
+    ----------------------------------------------------------------------------------------------------------*/
 
+    
+    char tmp[DIM_BUFFER];
+    while((read(fdFile, &tmp, sizeof(tmp))) > 0){
+        write(fdSocket, &tmp, strlen(tmp));
+    }
     close(fdSocket);
+    close(fdFile);
+
+    clock_t end = clock();
+    double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+
+    printf("CLIENT: tempo di esecuzione %f\n", time_spent);
+
     return 0;
 }

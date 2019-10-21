@@ -9,6 +9,7 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
+#include <time.h>
 
 #define DIM_BUFFER 256
 
@@ -19,6 +20,8 @@ int main(int argc, char const *argv[])
         perror("Usage: rcpServer");
         exit(1);
     }
+
+    clock_t begin = clock();
 
     struct sockaddr_in serverSock;
     serverSock.sin_family = AF_INET;
@@ -31,12 +34,14 @@ int main(int argc, char const *argv[])
 
     if(fdSocket < 0){
         perror("Impossibile creare la socket.");
+        close(fdSocket);
         exit(1);
     }
 
     //DEVO fare la bind per la socket del server!!!
     if(bind(fdSocket,(struct sockaddr *) &serverSock, sizeof(serverSock)) < 0){
         perror("Errore binding con porta.");
+        close(fdSocket);
         exit(1);
     }
 
@@ -50,6 +55,7 @@ int main(int argc, char const *argv[])
     int fdConnect;
     if((fdConnect = accept(fdSocket,(struct sockaddr *) &client, &sizeOfClient)) < 0){
         perror("Impossibile stabilire la connessione con il cliente.");
+        close(fdSocket);
         exit(1);
     }
 
@@ -86,5 +92,12 @@ int main(int argc, char const *argv[])
 
     close(fdConnect);
     close(fdSocket);
+    close(fdFile);
+
+    clock_t end = clock();
+    double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+
+    printf("SERVER: tempo di esecuzione %f msec\n", time_spent);
+
     return 0;
 }
